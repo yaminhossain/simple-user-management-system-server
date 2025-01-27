@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 const app = express();
@@ -43,10 +43,8 @@ async function run() {
       .db("simpleUserManagementSystem")
       .collection("users");
     // GET API for getting users data from MongoBD
-    app.get("/users", async(req, res) => {
+    app.get("/users", async (req, res) => {
       const result = await usersCollection.find().toArray();
-      console.log(result);
-
       res.send(result);
     });
 
@@ -54,6 +52,34 @@ async function run() {
     app.post("/users", async (req, res) => {
       console.log(req.body);
       const result = await usersCollection.insertOne(req.body);
+      res.send(result);
+    });
+
+    // PUT API for updating user data to MongoDB
+    app.put("/users/:id", async(req, res) => {
+      console.log("The put request is hitting");
+      console.log(req.params.id);
+      console.log(req.body);
+      const filter = { _id: new ObjectId(req.params.id) };
+      const options = { upsert: true };
+      const updatedUserData = {
+        $set: {
+          name:req.body.name,
+          email: req.body.email,
+          gender:req.body.gender,
+          status:req.body.status
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updatedUserData, options);
+      res.send(result);
+    });
+
+    // DELETE API for deleting a user from the database
+    app.delete("/users/:id", async (req, res) => {
+      console.log("The delete api is hitting");
+      console.log(req.params.id);
+      const query = { _id: new ObjectId(req.params.id) };
+      const result = await usersCollection.deleteOne(query);
       res.send(result);
     });
   } finally {
